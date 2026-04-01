@@ -561,7 +561,7 @@ if ($drawDate !== '') {
             'label'    => $ballLabels[$bIdx] . ' (' . lePad2($ball) . ')',
             'prevDate' => $prevDate,
             'drawsAgo' => $drawsAgo,
-            'isBonus'  => ($bIdx === 5),
+            'isBonus'  => false,
         ];
     }
 }
@@ -1610,8 +1610,7 @@ table.skai-table tbody tr:hover{
             <span class="skai-ball skai-ball--main"><?php echo htmlspecialchars(lePad2($p3), ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="skai-ball skai-ball--main"><?php echo htmlspecialchars(lePad2($p4), ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="skai-ball skai-ball--main"><?php echo htmlspecialchars(lePad2($p5), ENT_QUOTES, 'UTF-8'); ?></span>
-            <span class="skai-ball-gap" aria-hidden="true"></span>
-            <span class="skai-ball skai-ball--bonus"><?php echo htmlspecialchars(lePad2($pb), ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="skai-ball skai-ball--main"><?php echo htmlspecialchars(lePad2($pb), ENT_QUOTES, 'UTF-8'); ?></span>
           </div>
 
           <div class="skai-hero-actions" aria-label="Primary actions">
@@ -2030,7 +2029,7 @@ table.skai-table tbody tr:hover{
                   [$lastDrawSort, $lastDrawLabel] = leDrawingsAgoLabel($starLastSeenIndex[$number] ?? null, (int) $nodCurrentStar);
                   ?>
                   <tr>
-                    <td><span class="skai-pill skai-pill--bonus"><?php echo htmlspecialchars($number, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                    <td><span class="skai-pill skai-pill--main"><?php echo htmlspecialchars($number, ENT_QUOTES, 'UTF-8'); ?></span></td>
                     <td><?php echo (int) $countNumber; ?> X</td>
                     <td data-sort="<?php echo (int) $lastDrawSort; ?>"><?php echo htmlspecialchars($lastDrawLabel, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td>
@@ -2406,7 +2405,7 @@ table.skai-table tbody tr:hover{
     }
 
     bindGroup('.js-track-main',  mainWrap,  'skai-chip--main',  'Select numbers to create a short tracked set for comparison across this page.');
-    bindGroup('.js-track-bonus', bonusWrap, 'skai-chip--bonus', 'Use tracking to keep a small working set visible while you compare modules.');
+    bindGroup('.js-track-bonus', bonusWrap, 'skai-chip--main', 'Use tracking to keep a small working set visible while you compare modules.');
 
     if (clearMain) {
       clearMain.addEventListener('click', function () {
@@ -2426,7 +2425,7 @@ table.skai-table tbody tr:hover{
         for (i = 0; i < inputs.length; i++) {
           inputs[i].checked = false;
         }
-        renderTracked('.js-track-bonus', bonusWrap, 'skai-chip--bonus', 'Use tracking to keep a small working set visible while you compare modules.');
+        renderTracked('.js-track-bonus', bonusWrap, 'skai-chip--main', 'Use tracking to keep a small working set visible while you compare modules.');
       });
     }
   }
