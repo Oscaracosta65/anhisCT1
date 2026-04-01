@@ -21,7 +21,6 @@
  * - Pick-6 game: all 6 positions drawn from same pool (01..44)
  * - main balls = 6
  * - main number range = 01..44
- * - sixth position tracked separately for secondary analysis
  */
 
 defined('_JEXEC') or die;
@@ -341,23 +340,16 @@ function leEscapeJsString(string $value): string
  * --------------------------------------------------------------------------
  */
 $defaultWindowMain = 100;
-$defaultWindowStar = 100;
 
 $nodCurrentMain = $defaultWindowMain;
-$nodCurrentStar = $defaultWindowStar;
 
 if ($input->getMethod() === 'POST' && Session::checkToken()) {
     if ($input->post->get('fq-search', null, 'cmd') !== null) {
         $nodCurrentMain = (int) $input->post->get('nod', $defaultWindowMain, 'int');
     }
-
-    if ($input->post->get('pfq-search', null, 'cmd') !== null) {
-        $nodCurrentStar = (int) $input->post->get('pnod', $defaultWindowStar, 'int');
-    }
 }
 
 $nodCurrentMain = max(10, min(700, $nodCurrentMain));
-$nodCurrentStar = max(10, min(700, $nodCurrentStar));
 
 /**
  * --------------------------------------------------------------------------
@@ -383,7 +375,6 @@ $latestMainBalls = [$p1, $p2, $p3, $p4, $p5, $pb];
 $logo = (isset($stateAbrev, $gName)) ? leResolveLogo((string) $stateAbrev, (string) $gName) : ['exists' => false, 'url' => ''];
 
 $rowsMain = leFetchRecentDraws($db, (string) $dbCol, $gameId, $nodCurrentMain);
-$rowsStar = ($nodCurrentStar === $nodCurrentMain) ? $rowsMain : leFetchRecentDraws($db, (string) $dbCol, $gameId, $nodCurrentStar);
 
 /**
  * Main counts — all 6 positions (01..44)
@@ -414,26 +405,6 @@ foreach ($rowsMain as $idx => $row) {
 }
 
 /**
- * Sixth-position counts — sixth column only (01..44)
- * Shows which numbers most frequently land in the sixth drawn position.
- */
-[$starCounts, $starLastSeenIndex] = leInitRange(1, 44);
-
-foreach ($rowsStar as $idx => $row) {
-    $ball = trim((string) ($row['sixth'] ?? ''));
-
-    if ($ball === '' || !isset($starCounts[$ball])) {
-        continue;
-    }
-
-    $starCounts[$ball]++;
-
-    if ($starLastSeenIndex[$ball] === null) {
-        $starLastSeenIndex[$ball] = (int) $idx;
-    }
-}
-
-/**
  * --------------------------------------------------------------------------
  * Insight data
  * --------------------------------------------------------------------------
@@ -447,13 +418,6 @@ foreach ($mainChartLabels as $label) {
     $mainRecencyValues[] = (int) (($mainLastSeenIndex[$label] ?? null) === null
         ? ($nodCurrentMain + 1)
         : ((int) $mainLastSeenIndex[$label] + 1));
-}
-
-$starChartLabels = leBuildNaturalLabels(1, 44);
-$starChartValues = [];
-
-foreach ($starChartLabels as $label) {
-    $starChartValues[] = (int) ($starCounts[$label] ?? 0);
 }
 
 $topActiveKeys = leTopKeysByValue($mainCounts, 10, false);
@@ -1693,8 +1657,8 @@ table.skai-table tbody tr:hover{
     <article class="skai-stat">
       <div class="skai-stat-head skai-stat-head--ember">Window analyzed</div>
       <div class="skai-stat-body">
-        <div class="skai-stat-value"><?php echo (int) $nodCurrentMain; ?> / <?php echo (int) $nodCurrentStar; ?></div>
-        <div class="skai-stat-note">Main-number draw window and sixth-position draw window currently loaded for this page view.</div>
+        <div class="skai-stat-value"><?php echo (int) $nodCurrentMain; ?></div>
+        <div class="skai-stat-note">Draw window currently loaded for this page view.</div>
       </div>
     </article>
   </section>
@@ -1825,7 +1789,7 @@ table.skai-table tbody tr:hover{
       <div>
         <h2 id="frequency-title" class="skai-section-title">Frequency deep dive</h2>
         <p class="skai-section-sub">
-          Move from summary to full reference. The first panel shows the complete distribution across all values 01&ndash;44 counting all six positions. The second panel shows which values most frequently appear in the sixth drawn position specifically. The third panel shows recency distance for each number.
+          Move from summary to full reference. The first panel shows the complete distribution across all values 01&ndash;44 counting all six positions. The second panel shows recency distance for each number.
         </p>
       </div>
     </div>
@@ -1847,20 +1811,6 @@ table.skai-table tbody tr:hover{
         </div>
 
         <div class="skai-grid">
-          <div class="skai-card">
-            <div class="skai-card-head skai-card-head--radiant">
-              Sixth position distribution
-              <span class="skai-card-sub">Which values 01&ndash;44 appear most in the sixth drawn position, last <?php echo (int) $nodCurrentStar; ?> drawings</span>
-            </div>
-            <div class="skai-card-body">
-              <div class="skai-chart-shell">
-                <div class="skai-chart-frame skai-chart-frame--medium">
-                  <canvas id="starChart" aria-label="Sixth position distribution chart" role="img"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div class="skai-card">
             <div class="skai-card-head skai-card-head--ember">
               Recency distribution
@@ -1897,7 +1847,7 @@ table.skai-table tbody tr:hover{
       <form name="fqsearch" method="post" action="/all-us-lotteries/results-analysis?st=<?php echo htmlspecialchars((string) $stateAbrev, ENT_QUOTES, 'UTF-8'); ?>&amp;stn=<?php echo htmlspecialchars((string) $stateName, ENT_QUOTES, 'UTF-8'); ?>&amp;gm=<?php echo htmlspecialchars((string) $gName, ENT_QUOTES, 'UTF-8'); ?>#tables">
         <div class="skai-controls-row">
           <div class="skai-controls-left">
-            <label for="nod">Main draw window</label>
+            <label for="nod">Draw window</label>
             <select name="nod" id="nod" class="skai-select">
               <?php foreach (range(10, 700, 5) as $opt) : ?>
                 <option value="<?php echo (int) $opt; ?>"<?php echo ((int) $opt === (int) $nodCurrentMain) ? ' selected="selected"' : ''; ?>>
@@ -1905,20 +1855,10 @@ table.skai-table tbody tr:hover{
                 </option>
               <?php endforeach; ?>
             </select>
-
-            <label for="pnod">Sixth position window</label>
-            <select name="pnod" id="pnod" class="skai-select">
-              <?php foreach (range(10, 700, 5) as $opt) : ?>
-                <option value="<?php echo (int) $opt; ?>"<?php echo ((int) $opt === (int) $nodCurrentStar) ? ' selected="selected"' : ''; ?>>
-                  <?php echo (int) $opt; ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
           </div>
 
           <div class="skai-controls-right">
-            <button class="skai-button" name="fq-search" type="submit" value="1">Update analysis windows</button>
-            <input type="hidden" name="pfq-search" value="1">
+            <button class="skai-button" name="fq-search" type="submit" value="1">Update analysis window</button>
             <?php echo HTMLHelper::_('form.token'); ?>
           </div>
         </div>
@@ -2004,64 +1944,6 @@ table.skai-table tbody tr:hover{
             </div>
           </div>
         </div>
-
-        <div class="skai-card">
-          <div class="skai-card-head skai-card-head--radiant">
-            Sixth position table
-            <span class="skai-card-sub">Counts and recency for values 01&ndash;44 in the sixth drawn position</span>
-          </div>
-
-          <div class="skai-table-wrap">
-            <table id="skai-star-table" class="skai-table" aria-label="Sixth position frequency table">
-              <thead>
-                <tr>
-                  <th>Number</th>
-                  <th>Drawn Times</th>
-                  <th>Last Drawn</th>
-                  <th>Track</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php for ($i = 1; $i <= 44; $i++) : ?>
-                  <?php
-                  $number      = ($i < 10) ? '0' . $i : (string) $i;
-                  $countNumber = (int) ($starCounts[$number] ?? 0);
-                  [$lastDrawSort, $lastDrawLabel] = leDrawingsAgoLabel($starLastSeenIndex[$number] ?? null, (int) $nodCurrentStar);
-                  ?>
-                  <tr>
-                    <td><span class="skai-pill skai-pill--main"><?php echo htmlspecialchars($number, ENT_QUOTES, 'UTF-8'); ?></span></td>
-                    <td><?php echo (int) $countNumber; ?> X</td>
-                    <td data-sort="<?php echo (int) $lastDrawSort; ?>"><?php echo htmlspecialchars($lastDrawLabel, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
-                      <input
-                        class="skai-checkbox js-track-bonus"
-                        type="checkbox"
-                        value="<?php echo htmlspecialchars($number, ENT_QUOTES, 'UTF-8'); ?>"
-                        aria-label="Track sixth position number <?php echo htmlspecialchars($number, ENT_QUOTES, 'UTF-8'); ?>"
-                      >
-                    </td>
-                  </tr>
-                <?php endfor; ?>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="skai-tracked">
-            <div class="skai-tracked-head">
-              <h3 class="skai-tracked-title">Tracked sixth position numbers</h3>
-              <div class="skai-tracked-actions">
-                <button class="skai-link-btn" type="button" id="clearBonusTracked">Clear all</button>
-              </div>
-            </div>
-            <div class="skai-chip-wrap" id="bonusTrackedWrap">
-              <div class="skai-empty">Use tracking to keep a small working set visible while you compare modules.</div>
-            </div>
-          </div>
-
-          <div class="skai-note">
-            Tracking is local to this page view. It is intended as a lightweight comparison aid while you move between the overview, tables, and advanced SKAI tools.
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -2130,7 +2012,7 @@ table.skai-table tbody tr:hover{
 
     <div class="skai-section-body">
       <div class="skai-method-note">
-        <strong>Interpretation guidance:</strong> Frequency, recency, and spacing can provide useful context for reviewing draw history, but they should be treated as descriptive signals rather than guarantees. For this Pick-6 game, all six drawn numbers come from the same pool (01&ndash;44), so all positions are counted together in the main distribution. The sixth position analysis is offered as an additional reference layer. The purpose of this page is to make the recent behavior of the game easier to understand, compare, and carry into deeper SKAI analysis.
+        <strong>Interpretation guidance:</strong> Frequency, recency, and spacing can provide useful context for reviewing draw history, but they should be treated as descriptive signals rather than guarantees. For this Pick-6 game, all six drawn numbers come from the same pool (01&ndash;44), so all positions are counted together in one distribution. The purpose of this page is to make the recent behavior of the game easier to understand, compare, and carry into deeper SKAI analysis.
       </div>
     </div>
   </section>
@@ -2147,9 +2029,7 @@ table.skai-table tbody tr:hover{
     quietValues: <?php echo json_encode(array_values($quietestValues)); ?>,
     mainLabels: <?php echo json_encode(array_values($mainChartLabels)); ?>,
     mainValues: <?php echo json_encode(array_values($mainChartValues)); ?>,
-    mainRecencyValues: <?php echo json_encode(array_values($mainRecencyValues)); ?>,
-    starLabels: <?php echo json_encode(array_values($starChartLabels)); ?>,
-    starValues: <?php echo json_encode(array_values($starChartValues)); ?>
+    mainRecencyValues: <?php echo json_encode(array_values($mainRecencyValues)); ?>
   };
 
   function loadChartJsIfNeeded(done) {
@@ -2235,7 +2115,6 @@ table.skai-table tbody tr:hover{
     var topActiveCanvas = document.getElementById('topActiveChart');
     var quietCanvas     = document.getElementById('quietChart');
     var fullMainCanvas  = document.getElementById('fullMainChart');
-    var starCanvas      = document.getElementById('starChart');
     var recencyCanvas   = document.getElementById('recencyChart');
 
     if (topActiveCanvas) {
@@ -2288,24 +2167,6 @@ table.skai-table tbody tr:hover{
       });
     }
 
-    if (starCanvas) {
-      new Chart(starCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: chartData.starLabels,
-          datasets: [{
-            data: chartData.starValues,
-            borderWidth: 0,
-            borderRadius: 6,
-            barThickness: 8,
-            maxBarThickness: 10,
-            backgroundColor: '#1C66FF'
-          }]
-        },
-        options: commonBarOptions(true)
-      });
-    }
-
     if (recencyCanvas) {
       new Chart(recencyCanvas.getContext('2d'), {
         type: 'bar',
@@ -2351,12 +2212,10 @@ table.skai-table tbody tr:hover{
   }
 
   function bindTrackers() {
-    var mainWrap   = document.getElementById('mainTrackedWrap');
-    var bonusWrap  = document.getElementById('bonusTrackedWrap');
-    var clearMain  = document.getElementById('clearMainTracked');
-    var clearBonus = document.getElementById('clearBonusTracked');
+    var mainWrap  = document.getElementById('mainTrackedWrap');
+    var clearMain = document.getElementById('clearMainTracked');
 
-    if (!mainWrap || !bonusWrap) {
+    if (!mainWrap) {
       return;
     }
 
@@ -2404,8 +2263,7 @@ table.skai-table tbody tr:hover{
       renderTracked(selector, wrap, chipClass, emptyText);
     }
 
-    bindGroup('.js-track-main',  mainWrap,  'skai-chip--main',  'Select numbers to create a short tracked set for comparison across this page.');
-    bindGroup('.js-track-bonus', bonusWrap, 'skai-chip--main', 'Use tracking to keep a small working set visible while you compare modules.');
+    bindGroup('.js-track-main', mainWrap, 'skai-chip--main', 'Select numbers to create a short tracked set for comparison across this page.');
 
     if (clearMain) {
       clearMain.addEventListener('click', function () {
@@ -2415,17 +2273,6 @@ table.skai-table tbody tr:hover{
           inputs[i].checked = false;
         }
         renderTracked('.js-track-main', mainWrap, 'skai-chip--main', 'Select numbers to create a short tracked set for comparison across this page.');
-      });
-    }
-
-    if (clearBonus) {
-      clearBonus.addEventListener('click', function () {
-        var inputs = document.querySelectorAll('.js-track-bonus');
-        var i;
-        for (i = 0; i < inputs.length; i++) {
-          inputs[i].checked = false;
-        }
-        renderTracked('.js-track-bonus', bonusWrap, 'skai-chip--main', 'Use tracking to keep a small working set visible while you compare modules.');
       });
     }
   }
