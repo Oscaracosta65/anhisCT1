@@ -851,7 +851,7 @@ $jsonLdUrl  = htmlspecialchars($canonicalNoQuery, ENT_QUOTES, 'UTF-8');
 
 .skai-advanced-links{
   display:grid;
-  grid-template-columns:repeat(3, minmax(0,1fr));
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:10px;
   margin-top:10px;
 }
@@ -1630,6 +1630,7 @@ table.skai-table tbody tr:hover{
             <a class="skai-mini-link" href="/picking-winning-numbers/artificial-intelligence/skip-and-hit-analysis?game_id=CT1">Skip &amp; Hit Analysis</a>
             <a class="skai-mini-link" href="/picking-winning-numbers/artificial-intelligence/markov-chain-monte-carlo-mcmc-analysis?game_id=CT1">MCMC Markov Analysis</a>
             <a class="skai-mini-link" href="/all-lottery-heatmaps?gameId=CT1">Heatmap Analysis</a>
+            <a class="skai-mini-link" href="/lottery-archives-pick6?gId=<?php echo rawurlencode($gId); ?>&amp;stateName=<?php echo rawurlencode((string) $stateName); ?>&amp;gName=<?php echo rawurlencode((string) $gName); ?>&amp;sTn=<?php echo rawurlencode(strtolower((string) $stateAbrev)); ?>">Lottery Archives</a>
           </div>
         </div>
 
