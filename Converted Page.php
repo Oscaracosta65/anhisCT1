@@ -514,15 +514,14 @@ if (!empty($windowShiftOut)) {
 $drawHistoryRows = [];
 
 if ($drawDate !== '') {
-    $ballLabels = ['Ball 1', 'Ball 2', 'Ball 3', 'Ball 4', 'Ball 5', 'Ball 6'];
     $ballValues = [$p1, $p2, $p3, $p4, $p5, $pb];
 
-    foreach ($ballValues as $bIdx => $ball) {
+    foreach ($ballValues as $ball) {
         $prevDate = leGetPreviousOccurrenceDate($db, (string) $dbCol, $gameId, $drawDate, $ball, false);
         $drawsAgo = leGetDrawingsSinceDate($db, (string) $dbCol, $gameId, $prevDate, $drawDate);
 
         $drawHistoryRows[] = [
-            'label'    => $ballLabels[$bIdx] . ' (' . lePad2($ball) . ')',
+            'label'    => lePad2($ball),
             'prevDate' => $prevDate,
             'drawsAgo' => $drawsAgo,
             'isBonus'  => false,
@@ -1739,7 +1738,7 @@ table.skai-table tbody tr:hover{
             <div class="skai-history-list">
               <?php foreach ($drawHistoryRows as $row) : ?>
                 <div class="skai-history-item">
-                  <div class="skai-history-name"><?php echo htmlspecialchars((string) $row['label'], ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div class="skai-history-name"><span class="skai-ball skai-ball--main"><?php echo htmlspecialchars((string) $row['label'], ENT_QUOTES, 'UTF-8'); ?></span></div>
                   <div class="skai-history-date">
                     <?php if (!empty($row['prevDate'])) : ?>
                       Previously seen on <?php echo leFmtDateLong((string) $row['prevDate']); ?>
@@ -1818,7 +1817,7 @@ table.skai-table tbody tr:hover{
             </div>
             <div class="skai-card-body">
               <div class="skai-chart-shell">
-                <div class="skai-chart-frame">
+                <div class="skai-chart-frame skai-chart-frame--medium">
                   <canvas id="recencyChart" aria-label="Number recency chart" role="img"></canvas>
                 </div>
               </div>
@@ -1866,8 +1865,7 @@ table.skai-table tbody tr:hover{
     </div>
 
     <div class="skai-section-body">
-      <div class="skai-two-col">
-        <div class="skai-card">
+      <div class="skai-card">
           <div class="skai-card-head skai-card-head--horizon">
             Main numbers table
             <span class="skai-card-sub">Counts and recency for values 01&ndash;44, all six positions</span>
@@ -1944,7 +1942,6 @@ table.skai-table tbody tr:hover{
             </div>
           </div>
         </div>
-      </div>
     </div>
   </section>
 
@@ -2190,10 +2187,9 @@ table.skai-table tbody tr:hover{
           scales: {
             x: {
               ticks: {
-                maxRotation: 0,
-                autoSkip: true,
-                maxTicksLimit: 10,
-                font: { weight: '700' }
+                maxRotation: 45,
+                autoSkip: false,
+                font: { weight: '700', size: 10 }
               },
               grid: { display: false }
             },
